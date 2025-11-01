@@ -13,11 +13,11 @@ node('Maven') {
             if (currentBuild.number < 5) {
                 error("❌ Build number is less than 5. Stopping pipeline!")
             }
-            bat "${mvnHome}/bin/mvn clean package"
+            sh "${mvnHome}/bin/mvn clean package"
         }
 
         stage('Docker Build') {
-            bat "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} ."
+            sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} ."
         }
 
         stage('Docker Login') {
@@ -29,11 +29,11 @@ node('Maven') {
         }
 
         stage('Docker Push') {
-            bat "docker push ${IMAGE_NAME}:${BUILD_NUMBER}"
+            sh "docker push ${IMAGE_NAME}:${BUILD_NUMBER}"
         }
 
         stage('Deploy') {
-            bat '''
+            sh '''
                 echo "🚀 Deploying container..."
                 docker stop python-app || true
                 docker rm python-app || true
