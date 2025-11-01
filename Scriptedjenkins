@@ -5,7 +5,7 @@ node('Maven') {
 
     try {
         stage('Checkout') {
-            git branch: 'main', url: 'https://github.com/amrgodovich/jenkins-lab2'
+            git branch: 'main', url: 'https://github.com/amrgodovich/neww'
         }
 
         stage('Build') {
