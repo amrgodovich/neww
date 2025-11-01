@@ -1,52 +1,51 @@
 node('Maven') {
-    def mvnHome = tool 'Maven-3.8.9'   // Jenkins resolves this properly
-    def IMAGE_NAME = "amrgodovich/python-iti-main-jenkins"
 
-    try {
-        stage('Checkout') {
-            git branch: 'main', url: 'https://github.com/amrgodovich/neww'
-        }
+    def IMAGE_NAME = "amrgodovich/python-iti-main-jenkins-scripted"
 
-        stage('Build') {
-            echo "Build Number: ${currentBuild.number}"
-            if (currentBuild.number < 5) {
-                error("❌ Build number is less than 5. Stopping pipeline!")
-            }
-            sh "${mvnHome}/bin/mvn clean package"
-        }
-
-        stage('Docker Build') {
-            sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} ."
-        }
-
-        stage('Docker Login') {
-            withCredentials([string(credentialsId: 'dockerhub-pass', variable: 'DOCKERHUB_PASS')]) {
-                sh '''
-                    echo "$DOCKERHUB_PASS" | docker login -u amrgodovich --password-stdin || exit 1
-                '''
-            }
-        }
-
-        stage('Docker Push') {
-            sh "docker push ${IMAGE_NAME}:${BUILD_NUMBER}"
-        }
-
-        stage('Deploy') {
-            sh '''
-                echo "🚀 Deploying container..."
-                docker stop python-app || true
-                docker rm python-app || true
-                docker run -d -p 9000:8080 --name python-app ${IMAGE_NAME}:${BUILD_NUMBER}
-                echo "✅ App is running on: 9000"
-            '''
-        }
-
-        echo "✅ Pipeline finished successfully!"
-    } catch (err) {
-        echo "❌ Pipeline failed!"
-        throw err
-    } finally {
-        echo "🧹 Cleaning workspace..."
-        cleanWs()
+    stage('Checkout') {
+        git branch: 'main', url: 'https://github.com/amrgodovich/neww'
     }
+
+    stage('Build') {
+        withEnv(["PATH+MAVEN=${tool 'Maven-3.8.9'}/bin"]) {
+            echo "Build Number: ${currentBuild.number}"
+
+            if (currentBuild.number.toInteger() < 5) {
+                error("Build number is less than 5. Stopping pipeline!")
+            }
+
+            sh "mvn clean package"
+        }
+    }
+
+    stage('Docker Build') {
+        sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} ."
+    }
+
+    stage('Docker Login') {
+        withCredentials([string(credentialsId: 'dockerhub-pass', variable: 'DOCKERHUB_PASS')]) {
+            sh """echo "$DOCKERHUB_PASS" | docker login -u amrgodovich --password-stdin"""
+        }
+    }
+
+    stage('Docker Push') {
+        sh "docker push ${IMAGE_NAME}:${BUILD_NUMBER}"
+    }
+
+    stage('Deploy') {
+        sh """
+            echo "Deploying container..."
+
+            docker stop python-app || true
+            docker rm python-app || true
+
+            docker run -d -p 9000:8080 --name python-app ${IMAGE_NAME}:${BUILD_NUMBER}
+
+            echo "App: http://<your-server-ip>:9000"
+        """
+    }
+
+    // POST actions manual block
+    echo "🧹 Cleaning workspace..."
+    cleanWs()
 }
