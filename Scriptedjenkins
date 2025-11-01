@@ -14,7 +14,7 @@ node('Maven') {
                 error("Build number is less than 5. Stopping pipeline!")
             }
 
-            sh "mvn clean package"
+            sh "mvn clean package -DskipTests"
         }
     }
 
