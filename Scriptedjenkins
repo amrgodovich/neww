@@ -1,7 +1,6 @@
 node('Maven') {
-    // Tools
-    def mvnHome = tool name: 'Maven-3.8.9', type: 'maven'
-    def IMAGE_NAME = "amrgodovich/jenkins-lab2-scr"
+    def mvnHome = tool 'Maven-3.8.9'   // Jenkins resolves this properly
+    def IMAGE_NAME = "amrgodovich/python-iti-main-jenkins"
 
     try {
         stage('Checkout') {
@@ -22,7 +21,7 @@ node('Maven') {
 
         stage('Docker Login') {
             withCredentials([string(credentialsId: 'dockerhub-pass', variable: 'DOCKERHUB_PASS')]) {
-                bat '''
+                sh '''
                     echo "$DOCKERHUB_PASS" | docker login -u amrgodovich --password-stdin || exit 1
                 '''
             }
